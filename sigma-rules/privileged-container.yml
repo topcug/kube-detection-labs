@@ -1,0 +1,27 @@
+title: Privileged Container Started
+id: a1b2c3d4-0002-4e5f-8a9b-clarifyintel02
+status: stable
+description: >
+  Detects a container starting with securityContext.privileged: true.
+  Privileged containers have near-full host access. Treat as critical unless
+  the image is a known, documented node-level agent.
+references:
+  - https://attack.mitre.org/techniques/T1611/
+  - https://clarifyintel.com/labs/lab-002-privileged-container
+author: ClarifyIntel
+date: 2026-04-04
+tags:
+  - attack.privilege_escalation
+  - attack.t1611
+logsource:
+  product: falco
+  service: falco
+detection:
+  selection:
+    rule: 'Privileged Container Started'
+  condition: selection
+falsepositives:
+  - CNI plugins (calico-node, aws-node, flannel)
+  - CSI storage drivers
+  - Some monitoring agents that require privileged mode
+level: critical

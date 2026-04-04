@@ -1,0 +1,26 @@
+# LAB-002: Privileged Container Started
+# MITRE ATT&CK: T1611 - Escape to Host
+# Severity: CRITICAL
+# https://clarifyintel.com/labs/lab-002-privileged-container
+
+- list: known_privileged_images
+  items: []
+  # Add known privileged node agents here, e.g.:
+  # items: [calico/node, amazon/aws-node, kube-proxy]
+
+- rule: Privileged Container Started
+  desc: >
+    A container started with privileged mode enabled.
+    Privileged containers have near-full host access and represent
+    a critical security risk if not explicitly expected and documented.
+    Treat as a security incident if the image is not in the allowlist.
+  condition: >
+    container_started and container.privileged = true and
+    not container.image.repository in (known_privileged_images)
+  output: >
+    Privileged container started
+    (user=%user.name container=%container.name
+    image=%container.image.repository
+    namespace=%k8s.ns.name pod=%k8s.pod.name)
+  priority: CRITICAL
+  tags: [container, privileged, mitre_privilege_escalation, T1611]

@@ -1,0 +1,32 @@
+# LAB-003: Cryptominer Process Detected
+# MITRE ATT&CK: T1496 - Resource Hijacking
+# Severity: CRITICAL
+# https://clarifyintel.com/labs/lab-003-cryptominer-detection
+
+- macro: crypto_miners
+  condition: >
+    proc.name in (xmrig, xmrig-notls, xmrig-cuda, xmrig-evo,
+                  minerd, cpuminer, cpuminer-multi,
+                  cgminer, bfgminer,
+                  ethminer, t-rex, nbminer,
+                  lolminer, phoenixminer, gminer,
+                  teamredminer, wildrig, srbminer,
+                  nanominer, noncerpro, cryptonote)
+
+- rule: Cryptominer Process Detected
+  desc: >
+    A known cryptomining process was detected inside a container.
+    This indicates the container has been compromised and is being
+    used to mine cryptocurrency using cluster resources.
+    This rule has near-zero false positives. Treat as confirmed incident.
+  condition: >
+    spawned_process and container and
+    crypto_miners
+  output: >
+    Cryptominer process detected in container
+    (user=%user.name container=%container.name
+    image=%container.image.repository
+    process=%proc.name cmdline=%proc.cmdline
+    namespace=%k8s.ns.name pod=%k8s.pod.name)
+  priority: CRITICAL
+  tags: [container, cryptominer, mitre_impact, T1496]

@@ -1,0 +1,28 @@
+# LAB-001: Shell Spawned in Container
+# MITRE ATT&CK: T1059 - Command and Scripting Interpreter
+# Severity: HIGH
+# https://clarifyintel.com/labs/lab-001-shell-in-container
+
+- list: trusted_shell_images
+  items: []
+  # Add known debug/CI images here, e.g.:
+  # items: [mycompany/debug-tools, ci-runner]
+
+- rule: Shell Spawned in Container
+  desc: >
+    A shell was spawned inside a container. This may indicate an attacker
+    has gained execution, or a developer is accessing production directly.
+    Investigate immediately if the image is not a known debug image.
+  condition: >
+    spawned_process and container and
+    proc.name in (shell_binaries) and
+    not proc.pname in (shell_binaries) and
+    not container.image.repository in (trusted_shell_images)
+  output: >
+    Shell spawned in container
+    (user=%user.name user_uid=%user.uid container=%container.name
+    image=%container.image.repository namespace=%k8s.ns.name
+    pod=%k8s.pod.name shell=%proc.name parent=%proc.pname
+    cmdline=%proc.cmdline)
+  priority: HIGH
+  tags: [container, shell, mitre_execution, T1059]

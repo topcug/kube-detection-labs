@@ -1,0 +1,26 @@
+title: Cryptominer Process Detected in Container
+id: a1b2c3d4-0003-4e5f-8a9b-clarifyintel03
+status: stable
+description: >
+  Detects a known cryptomining process running inside a container.
+  Near-zero false positive rate. If this fires, treat as a confirmed incident —
+  the container has been compromised and is mining using cluster resources.
+references:
+  - https://attack.mitre.org/techniques/T1496/
+  - https://clarifyintel.com/labs/lab-003-cryptominer-detection
+author: ClarifyIntel
+date: 2026-04-04
+tags:
+  - attack.impact
+  - attack.t1496
+logsource:
+  product: falco
+  service: falco
+detection:
+  selection:
+    rule: 'Cryptominer Process Detected'
+  condition: selection
+falsepositives:
+  - Test environments where miner binaries are renamed for Falco testing
+  - Attackers using custom-named binaries (mitigate with behavior-based detection)
+level: critical
