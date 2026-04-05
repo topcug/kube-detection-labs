@@ -1,0 +1,37 @@
+title: Sensitive File Read in Container
+id: lab-004-sensitive-file-read
+status: experimental
+description: >
+  A process inside a container read a sensitive credential file.
+  Covers /etc/shadow, /etc/passwd, and the Kubernetes service account token.
+  Indicative of credential access following initial execution.
+references:
+  - https://attack.mitre.org/techniques/T1552/
+  - https://clarifyintel.com/labs/lab-004-sensitive-file-read
+author: ClarifyIntel
+date: 2026-04-05
+tags:
+  - attack.credential_access
+  - attack.t1552
+logsource:
+  category: file_access
+  product: linux
+detection:
+  selection:
+    TargetFilename|startswith:
+      - '/etc/shadow'
+      - '/etc/passwd'
+      - '/etc/sudoers'
+      - '/root/.ssh'
+      - '/var/run/secrets/kubernetes.io/serviceaccount/token'
+  filter_legitimate:
+    Image|endswith:
+      - 'sshd'
+      - 'sudo'
+      - 'passwd'
+  condition: selection and not filter_legitimate
+falsepositives:
+  - Vault Agent sidecar reading SA token for authentication
+  - External Secrets Operator reading SA token
+  - Health check scripts reading /etc/passwd
+level: high

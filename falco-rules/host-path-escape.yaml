@@ -1,0 +1,56 @@
+# LAB-012: Container Escape via Host Path Mount
+# Falco detection rule
+# https://clarifyintel.com/labs/lab-012-host-path-escape
+
+- rule: Container with Sensitive Host Path Mount
+  desc: >
+    A container was started with a sensitive hostPath volume mount.
+    Gives the container direct access to the host filesystem — full node compromise path.
+  condition: >
+    container.mounts contains "/" or
+    container.mounts contains "/etc" or
+    container.mounts contains "/var/run/docker.sock" or
+    container.mounts contains "/run/containerd" or
+    container.mounts contains "/proc" or
+    container.mounts contains "/sys"
+  output: >
+    Sensitive hostPath mount in container
+    (container=%container.name image=%container.image.repository
+     mounts=%container.mounts
+     k8s_ns=%k8s.ns.name k8s_pod=%k8s.pod.name)
+  priority: CRITICAL
+  tags: [container, host_escape, T1611, hostpath]
+
+- rule: Host File Write via Mounted Volume
+  desc: >
+    A process in a container wrote to a path that appears to be a host
+    filesystem mount point. May indicate an active escape attempt.
+  condition: >
+    open_write and container and
+    (fd.name startswith /host/ or
+     fd.name startswith /proc/1/ or
+     fd.name startswith /node-root/)
+  output: >
+    Write to mounted host path from container
+    (user=%user.name proc=%proc.name file=%fd.name
+     container=%container.name image=%container.image.repository
+     k8s_ns=%k8s.ns.name k8s_pod=%k8s.pod.name)
+  priority: CRITICAL
+  tags: [container, host_escape, T1611, filesystem_write]
+
+- rule: Container Runtime Socket Access
+  desc: >
+    A container accessed the Docker or containerd socket.
+    Runtime socket access allows creating, modifying, or destroying any container on the node.
+  condition: >
+    open_read and container and
+    (fd.name = /var/run/docker.sock or
+     fd.name = /run/containerd/containerd.sock or
+     fd.name startswith /run/docker/)
+  output: >
+    Container runtime socket accessed
+    (user=%user.name proc=%proc.name
+     container=%container.name image=%container.image.repository
+     k8s_ns=%k8s.ns.name k8s_pod=%k8s.pod.name)
+  priority: CRITICAL
+  tags: [container, host_escape, T1611, runtime_socket]

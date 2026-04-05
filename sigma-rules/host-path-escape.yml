@@ -1,0 +1,27 @@
+title: Container Runtime Socket Accessed from Container
+id: lab-012-host-path-escape
+status: experimental
+description: >
+  A container process accessed the Docker or containerd runtime socket.
+  Runtime socket access allows creating or destroying any container on the node.
+references:
+  - https://attack.mitre.org/techniques/T1611/
+  - https://clarifyintel.com/labs/lab-012-host-path-escape
+author: ClarifyIntel
+date: 2026-04-05
+tags:
+  - attack.privilege_escalation
+  - attack.t1611
+logsource:
+  category: file_access
+  product: linux
+detection:
+  selection:
+    TargetFilename:
+      - '/var/run/docker.sock'
+      - '/run/containerd/containerd.sock'
+  condition: selection
+falsepositives:
+  - Docker-in-Docker CI/CD environments (should not be in production)
+  - Container runtime management tools in kube-system
+level: critical

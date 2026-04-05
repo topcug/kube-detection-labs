@@ -1,0 +1,35 @@
+# LAB-006: Reverse Shell from a Container
+# Falco detection rule
+# https://clarifyintel.com/labs/lab-006-reverse-shell
+
+- rule: Reverse Shell Detected
+  desc: >
+    A shell process was spawned with a network socket as stdin/stdout/stderr.
+    Primary indicator of a reverse shell — treat as CRITICAL.
+  condition: >
+    spawned_process and container and
+    proc.name in (shell_binaries) and
+    (fd.type = ipv4 or fd.type = ipv6) and
+    fd.direction = outbound
+  output: >
+    Reverse shell in container
+    (user=%user.name proc=%proc.name
+     container=%container.name image=%container.image.repository
+     connection=%fd.name k8s_ns=%k8s.ns.name k8s_pod=%k8s.pod.name)
+  priority: CRITICAL
+  tags: [container, reverse_shell, T1059, execution]
+
+- rule: Network Tool Spawned in Container
+  desc: >
+    A network utility (netcat, ncat, socat) was spawned inside a container.
+  condition: >
+    spawned_process and container and
+    proc.name in (nc, ncat, netcat, socat, nmap) and
+    not container.image.repository in (known_debug_images)
+  output: >
+    Network tool in container
+    (user=%user.name proc=%proc.name cmdline=%proc.cmdline
+     container=%container.name image=%container.image.repository
+     k8s_ns=%k8s.ns.name k8s_pod=%k8s.pod.name)
+  priority: HIGH
+  tags: [container, network_tool, T1059, execution]

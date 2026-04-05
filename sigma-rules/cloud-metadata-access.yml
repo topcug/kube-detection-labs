@@ -1,0 +1,27 @@
+title: Cloud Metadata Service Accessed from Container
+id: lab-011-cloud-metadata-access
+status: experimental
+description: >
+  A container process connected to the cloud provider metadata endpoint (169.254.169.254).
+  This endpoint provides IAM credentials and is rarely legitimate from application containers.
+references:
+  - https://attack.mitre.org/techniques/T1071/
+  - https://clarifyintel.com/labs/lab-011-unexpected-outbound-connection
+author: ClarifyIntel
+date: 2026-04-05
+tags:
+  - attack.command_and_control
+  - attack.t1071
+  - attack.credential_access
+  - attack.t1552
+logsource:
+  category: network_connection
+  product: linux
+detection:
+  selection:
+    DestinationIp: '169.254.169.254'
+    Initiated: 'true'
+  condition: selection
+falsepositives:
+  - Node-level agents that legitimately read instance metadata (scope to container context)
+level: critical

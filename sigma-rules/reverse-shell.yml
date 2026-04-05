@@ -1,0 +1,32 @@
+title: Reverse Shell in Container
+id: lab-006-reverse-shell
+status: experimental
+description: >
+  A shell process was spawned with a network socket, consistent with a reverse shell.
+  Critical indicator of active container compromise.
+references:
+  - https://attack.mitre.org/techniques/T1059/
+  - https://clarifyintel.com/labs/lab-006-reverse-shell
+author: ClarifyIntel
+date: 2026-04-05
+tags:
+  - attack.execution
+  - attack.t1059
+logsource:
+  category: network_connection
+  product: linux
+detection:
+  selection_shell:
+    Image|endswith:
+      - 'bash'
+      - 'sh'
+      - 'zsh'
+      - 'python'
+      - 'python3'
+  selection_network:
+    Initiated: 'true'
+    Direction: outbound
+  condition: selection_shell and selection_network
+falsepositives:
+  - Debug images with shells (dev namespace only)
+level: critical

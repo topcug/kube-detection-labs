@@ -1,0 +1,29 @@
+title: Setuid Binary Executed in Container
+id: lab-009-privilege-escalation
+status: experimental
+description: >
+  A setuid binary was executed inside a container. If allowPrivilegeEscalation
+  is not disabled, this results in privilege gain within the container.
+references:
+  - https://attack.mitre.org/techniques/T1548/
+  - https://clarifyintel.com/labs/lab-009-privilege-escalation
+author: ClarifyIntel
+date: 2026-04-05
+tags:
+  - attack.privilege_escalation
+  - attack.t1548
+logsource:
+  category: process_creation
+  product: linux
+detection:
+  selection:
+    FilePermissions|contains: 'SUID'
+  filter_legitimate:
+    Image|endswith:
+      - 'ping'
+      - 'su'
+  condition: selection and not filter_legitimate
+falsepositives:
+  - Debian/Ubuntu base images ship with setuid binaries (use distroless to avoid)
+  - SSH-based images
+level: high

@@ -1,0 +1,37 @@
+# LAB-007: Data Exfiltration via curl/wget
+# Falco detection rule
+# https://clarifyintel.com/labs/lab-007-data-exfiltration
+
+- rule: Outbound Data Transfer Tool in Container
+  desc: >
+    curl, wget, or a similar data transfer tool was spawned inside a container.
+    Production containers should use language-level HTTP clients, not system tools.
+  condition: >
+    spawned_process and container and
+    proc.name in (curl, wget, ftp, sftp) and
+    not container.image.repository in (known_download_images) and
+    not proc.pname in (package_mgmt_binaries)
+  output: >
+    Data transfer tool in container
+    (user=%user.name proc=%proc.name cmdline=%proc.cmdline
+     container=%container.name image=%container.image.repository
+     k8s_ns=%k8s.ns.name k8s_pod=%k8s.pod.name)
+  priority: HIGH
+  tags: [container, exfiltration, T1041, data_transfer]
+
+- rule: Pipe to Shell via Download Tool
+  desc: >
+    A download tool output is being piped to a shell. Classic dropper pattern.
+  condition: >
+    spawned_process and container and
+    proc.name in (curl, wget) and
+    (proc.cmdline contains "bash" or
+     proc.cmdline contains " sh" or
+     proc.cmdline contains "python")
+  output: >
+    Pipe-to-shell dropper pattern
+    (user=%user.name proc=%proc.name cmdline=%proc.cmdline
+     container=%container.name image=%container.image.repository
+     k8s_ns=%k8s.ns.name k8s_pod=%k8s.pod.name)
+  priority: CRITICAL
+  tags: [container, dropper, T1041, execution]

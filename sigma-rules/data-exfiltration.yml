@@ -1,0 +1,36 @@
+title: Data Transfer Tool Spawned in Container
+id: lab-007-data-exfiltration
+status: experimental
+description: >
+  curl, wget, or a similar data transfer tool was spawned inside a container.
+  Indicates possible exfiltration or dropper activity.
+references:
+  - https://attack.mitre.org/techniques/T1041/
+  - https://clarifyintel.com/labs/lab-007-data-exfiltration
+author: ClarifyIntel
+date: 2026-04-05
+tags:
+  - attack.exfiltration
+  - attack.t1041
+logsource:
+  category: process_creation
+  product: linux
+detection:
+  selection:
+    Image|endswith:
+      - 'curl'
+      - 'wget'
+      - 'ftp'
+      - 'sftp'
+  filter_package_manager:
+    ParentImage|endswith:
+      - 'apt'
+      - 'apt-get'
+      - 'apk'
+      - 'yum'
+      - 'dnf'
+  condition: selection and not filter_package_manager
+falsepositives:
+  - Package manager updates during container init
+  - Health check scripts (should be replaced with probes)
+level: high

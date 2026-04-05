@@ -1,0 +1,52 @@
+# LAB-009: Privilege Escalation via Setuid Binary
+# Falco detection rule
+# https://clarifyintel.com/labs/lab-009-privilege-escalation
+
+- rule: Setuid or Setgid Bit Set in Container
+  desc: >
+    The setuid or setgid bit was set on a file inside a container.
+    Preparation for privilege escalation — should not happen in production.
+  condition: >
+    open_write and container and
+    (evt.arg.flags contains S_ISUID or evt.arg.flags contains S_ISGID)
+  output: >
+    Setuid/setgid bit set on file
+    (user=%user.name proc=%proc.name file=%fd.name
+     container=%container.name image=%container.image.repository
+     k8s_ns=%k8s.ns.name k8s_pod=%k8s.pod.name)
+  priority: HIGH
+  tags: [container, privilege_escalation, T1548, setuid]
+
+- rule: Privilege Escalation via Setuid Binary
+  desc: >
+    A process executed a setuid binary inside a container. If
+    allowPrivilegeEscalation is not disabled, this results in a privilege gain.
+  condition: >
+    spawned_process and container and
+    proc.is_suid = true and
+    not proc.name in (sudo) and
+    not container.image.repository in (known_privileged_images)
+  output: >
+    Setuid binary executed in container
+    (user=%user.name proc=%proc.name parent=%proc.pname
+     container=%container.name image=%container.image.repository
+     k8s_ns=%k8s.ns.name k8s_pod=%k8s.pod.name)
+  priority: HIGH
+  tags: [container, privilege_escalation, T1548]
+
+- rule: Container Running as Root After Escalation
+  desc: >
+    A process is running as root (uid=0) inside a container that
+    did not start with root. May indicate successful privilege escalation.
+  condition: >
+    spawned_process and container and
+    user.uid = 0 and
+    not proc.pname in (runc, containerd-shim) and
+    not container.image.repository in (known_root_images)
+  output: >
+    Root process in container after escalation
+    (user=%user.name uid=%user.uid proc=%proc.name parent=%proc.pname
+     container=%container.name image=%container.image.repository
+     k8s_ns=%k8s.ns.name k8s_pod=%k8s.pod.name)
+  priority: HIGH
+  tags: [container, privilege_escalation, T1548]

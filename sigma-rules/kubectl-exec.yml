@@ -1,0 +1,32 @@
+title: kubectl exec in Production Container
+id: lab-005-kubectl-exec
+status: experimental
+description: >
+  An interactive shell was spawned inside a container via kubectl exec,
+  or the Kubernetes audit log recorded an exec subresource call in a production namespace.
+references:
+  - https://attack.mitre.org/techniques/T1609/
+  - https://clarifyintel.com/labs/lab-005-kubectl-exec
+author: ClarifyIntel
+date: 2026-04-05
+tags:
+  - attack.execution
+  - attack.t1609
+logsource:
+  category: process_creation
+  product: linux
+detection:
+  selection:
+    ParentImage|endswith:
+      - 'runc'
+      - 'containerd-shim'
+    Image|endswith:
+      - 'bash'
+      - 'sh'
+      - 'zsh'
+      - 'dash'
+  condition: selection
+falsepositives:
+  - Authorized incident response via kubectl exec
+  - CI/CD smoke tests in dedicated namespaces
+level: high

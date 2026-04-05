@@ -1,0 +1,24 @@
+# LAB-004: Sensitive File Read Inside a Container
+# Falco detection rule
+# https://clarifyintel.com/labs/lab-004-sensitive-file-read
+
+- rule: Sensitive File Read in Container
+  desc: >
+    A process inside a container read a sensitive credential file
+    such as /etc/shadow, /etc/passwd, or the Kubernetes service account token.
+    This may indicate credential access after initial execution.
+  condition: >
+    open_read and container and
+    (fd.name startswith /etc/shadow or
+     fd.name startswith /etc/passwd or
+     fd.name startswith /etc/sudoers or
+     fd.name startswith /root/.ssh or
+     fd.name startswith /var/run/secrets/kubernetes.io/serviceaccount/token) and
+    not proc.name in (sshd, sudo, passwd)
+  output: >
+    Sensitive file read in container
+    (user=%user.name proc=%proc.name file=%fd.name
+     container=%container.name image=%container.image.repository
+     k8s_ns=%k8s.ns.name k8s_pod=%k8s.pod.name)
+  priority: HIGH
+  tags: [container, credential_access, T1552, sensitive_files]

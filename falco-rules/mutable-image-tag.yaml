@@ -1,0 +1,36 @@
+# LAB-010: Container Running from a Mutable Image Tag
+# Falco detection rule
+# https://clarifyintel.com/labs/lab-010-mutable-image-tag
+
+- rule: Container Started with Mutable Image Tag
+  desc: >
+    A container started using :latest or a tag that was not resolved to
+    a digest. Mutable tags enable supply chain attacks and make rollbacks unreliable.
+  condition: >
+    container.image.tag = "latest" or
+    (container.image.tag = "" and container) and
+    not container.image.repository in (known_debug_images)
+  output: >
+    Container started with mutable image tag
+    (container=%container.name image=%container.image.repository
+     tag=%container.image.tag
+     k8s_ns=%k8s.ns.name k8s_pod=%k8s.pod.name)
+  priority: WARNING
+  tags: [container, supply_chain, T1525, image_tag]
+
+- rule: Container Image Not Pinned to Digest
+  desc: >
+    A container started with an image reference not pinned to a specific
+    digest (sha256:...). Digest pinning is the strongest image integrity guarantee.
+  condition: >
+    container and
+    not container.image.digest startswith "sha256:" and
+    not container.image.repository in (known_debug_images) and
+    k8s.ns.name in (production, prod)
+  output: >
+    Container image not digest-pinned
+    (container=%container.name image=%container.image.repository
+     tag=%container.image.tag digest=%container.image.digest
+     k8s_ns=%k8s.ns.name k8s_pod=%k8s.pod.name)
+  priority: WARNING
+  tags: [container, supply_chain, T1525, image_digest]

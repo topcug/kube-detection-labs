@@ -1,0 +1,37 @@
+# LAB-005: kubectl exec into a Running Container
+# Falco detection rule
+# https://clarifyintel.com/labs/lab-005-kubectl-exec
+
+- rule: Interactive Shell via kubectl exec
+  desc: >
+    An interactive shell was spawned inside a container, consistent with
+    kubectl exec. This could be an authorized developer or an attacker
+    using a stolen kubeconfig.
+  condition: >
+    spawned_process and container and
+    proc.name in (shell_binaries) and
+    proc.pname in (runc, containerd-shim, docker) and
+    container.id != host
+  output: >
+    Interactive shell via exec
+    (user=%user.name container=%container.name image=%container.image.repository
+     shell=%proc.name parent=%proc.pname
+     k8s_ns=%k8s.ns.name k8s_pod=%k8s.pod.name)
+  priority: HIGH
+  tags: [container, exec, T1609, execution]
+
+- rule: kubectl exec in Production Namespace
+  desc: >
+    kubectl exec was called against a pod in a production namespace.
+  condition: >
+    ka.verb = exec and
+    ka.target.resource = pods and
+    ka.target.subresource = exec and
+    ka.target.namespace in (production, prod, default)
+  output: >
+    kubectl exec in production
+    (user=%ka.user.name pod=%ka.target.name ns=%ka.target.namespace
+     command=%ka.uri.param[command])
+  priority: WARNING
+  tags: [k8s_audit, exec, T1609]
+  source: k8s_audit
